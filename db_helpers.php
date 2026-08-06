@@ -214,6 +214,45 @@ function dbUpdateUser($id, $data)
     return true;
 }
 
+function dbUpdateUserProfile($userId, $username, $email, $currentPassword = null, $newPassword = null)
+{
+    $db = Database::getInstance();
+    $user = $db->getRow("SELECT * FROM users WHERE id = ?", [$userId]);
+    if (!$user) {
+        return ["success" => false, "error" => "User tidak ditemukan."];
+    }
+
+    // Check duplicate username/email for other users
+    $existing = $db->getRow(
+        "SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?",
+        [$username, $email, $userId]
+    );
+    if ($existing) {
+        return ["success" => false, "error" => "Username atau email sudah digunakan pengguna lain."];
+    }
+
+    $updateData = [
+        "username" => $username,
+        "email" => $email,
+    ];
+
+    // If changing password, verify current password
+    if (!empty($newPassword)) {
+        if (empty($currentPassword) || !password_verify($currentPassword, $user["password_hash"])) {
+            return ["success" => false, "error" => "Password saat ini tidak sesuai."];
+        }
+        $updateData["password"] = $newPassword;
+    }
+
+    $updated = dbUpdateUser($userId, $updateData);
+    if ($updated) {
+        $_SESSION["username"] = $username;
+        return ["success" => true];
+    }
+    return ["success" => false, "error" => "Gagal memperbarui profil."];
+}
+
+
 function dbDeleteUser($id)
 {
     $db = Database::getInstance();
@@ -405,6 +444,29 @@ function dbDeleteGlobalAlternative($id)
 {
     $db = Database::getInstance();
     return $db->execute("DELETE FROM global_alternatives WHERE id = ?", [$id]);
+}
+
+function dbReplaceAllGlobalAlternatives($names)
+{
+    $db = Database::getInstance();
+    $conn = $db->getConnection();
+    $conn->query("DELETE FROM global_alternatives");
+    if (empty($names)) {
+        return 0;
+    }
+    $stmt = $conn->prepare("INSERT INTO global_alternatives (name) VALUES (?)");
+    $count = 0;
+    foreach ($names as $name) {
+        $name = trim($name);
+        if ($name === '') {
+            continue;
+        }
+        $stmt->bind_param("s", $name);
+        $stmt->execute();
+        $count++;
+    }
+    $stmt->close();
+    return $count;
 }
 
 function dbGetGlobalAltStats()
@@ -639,12 +701,46 @@ function dbLoadAnalysisIntoSession($id)
     $_SESSION["ahp"]["notes"] = $analysis["notes"];
     $_SESSION["ahp"]["saved_analysis_id"] = $analysis["id"];
 
+    // Reconstruct the original session alternative keys so they match the keys
+    // used when the pairwise data was saved (e.g. "a1_a2"). The alternatives
+    // table rows were inserted in the same order as the session keys, but the
+    // DB auto-increment IDs may differ (e.g. after other analyses were saved
+    // first), so DB IDs cannot be used as session keys.
+    //
+    // Prefer keys derived from the stored pairwise data (order of first
+    // appearance) — this also preserves gaps left by deleted alternatives
+    // (e.g. a1, a3). Fall back to positional keys (a1, a2, ...) when no
+    // alternative pairwise data exists.
+    $altKeysFromData = [];
+    foreach ($analysis["comparisons"] as $comp) {
+        if ($comp["type"] !== "alternatives" || empty($comp["pairwise_data"])) {
+            continue;
+        }
+        $pairwiseData = json_decode($comp["pairwise_data"], true);
+        if (!is_array($pairwiseData)) {
+            continue;
+        }
+        foreach ($pairwiseData as $key => $val) {
+            $parts = explode("_", $key);
+            if (count($parts) >= 2) {
+                foreach ($parts as $p) {
+                    if (preg_match('/^a\d+$/', $p) && !in_array($p, $altKeysFromData)) {
+                        $altKeysFromData[] = $p;
+                    }
+                }
+            }
+        }
+    }
+
     $alts = [];
     $altLabels = [];
-    foreach ($analysis["alternatives_list"] as $alt) {
-        $id = "a" . $alt["id"];
-        $alts[$id] = $alt["name"];
-        $altLabels[$id] = $alt["name"];
+    $altList = $analysis["alternatives_list"];
+    $nAlts = count($altList);
+    $useDataKeys = count($altKeysFromData) === $nAlts;
+    for ($i = 0; $i < $nAlts; $i++) {
+        $id = $useDataKeys ? $altKeysFromData[$i] : ("a" . ($i + 1));
+        $alts[$id] = $altList[$i]["name"];
+        $altLabels[$id] = $altList[$i]["name"];
     }
     $_SESSION["ahp"]["alternatives"] = $alts;
     $_SESSION["ahp"]["alternative_labels"] = $altLabels;
@@ -866,3 +962,81 @@ function dbIsSetupComplete()
         return false;
     }
 }
+
+// ============================================================
+// APP SETTINGS HELPERS
+// ============================================================
+
+function dbEnsureSettingsTable()
+{
+    static $ensured = false;
+    if ($ensured) return;
+    try {
+        $db = Database::getInstance();
+        $conn = $db->getConnection();
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS `settings` (
+                `setting_key` VARCHAR(50) PRIMARY KEY,
+                `setting_value` TEXT DEFAULT NULL,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $ensured = true;
+    } catch (Exception $e) {}
+}
+
+function dbGetSetting($key, $default = '')
+{
+    dbEnsureSettingsTable();
+    try {
+        $db = Database::getInstance();
+        $val = $db->getValue("SELECT setting_value FROM settings WHERE setting_key = ?", [$key]);
+        if ($val !== null) return $val;
+    } catch (Exception $e) {}
+
+    $defaults = [
+        'app_name' => APP_NAME,
+        'app_institution' => APP_INSTITUTION,
+        'app_logo_text' => 'A',
+        'app_logo_url' => '',
+        'report_signer_title' => 'Hormat Kami,',
+        'report_signer_name' => 'Widya Corietania Basri, S.H., M.Kn.',
+        'report_header_align' => 'center',
+    ];
+
+    return $defaults[$key] ?? $default;
+}
+
+function dbSetSetting($key, $value)
+{
+    dbEnsureSettingsTable();
+    $db = Database::getInstance();
+    $db->execute(
+        "INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+        [$key, $value]
+    );
+    return true;
+}
+
+function dbGetAllSettings()
+{
+    dbEnsureSettingsTable();
+    $defaults = [
+        'app_name' => APP_NAME,
+        'app_institution' => APP_INSTITUTION,
+        'app_logo_text' => 'A',
+        'app_logo_url' => '',
+        'report_signer_title' => 'Hormat Kami,',
+        'report_signer_name' => 'Widya Corietania Basri, S.H., M.Kn.',
+        'report_header_align' => 'center',
+    ];
+    try {
+        $db = Database::getInstance();
+        $rows = $db->getRows("SELECT setting_key, setting_value FROM settings");
+        foreach ($rows as $row) {
+            $defaults[$row['setting_key']] = $row['setting_value'];
+        }
+    } catch (Exception $e) {}
+    return $defaults;
+}
+

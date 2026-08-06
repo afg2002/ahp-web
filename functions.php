@@ -172,7 +172,7 @@ function resetSession() {
 }
 
 function getCurrentStep() {
-    $steps = ['home', 'login', 'register', 'step1', 'step2', 'step3', 'step4', 'step5', 'results', 'dashboard', 'view', 'about', 'admin-dashboard', 'admin-users', 'admin-criteria', 'admin-alternatives'];
+    $steps = ['home', 'login', 'register', 'profile', 'step1', 'step2', 'step3', 'step4', 'step5', 'results', 'dashboard', 'view', 'about', 'admin-dashboard', 'admin-users', 'admin-criteria', 'admin-alternatives', 'admin-settings'];
     $step = $_GET['page'] ?? 'home';
     if (!in_array($step, $steps)) {
         return 'home';

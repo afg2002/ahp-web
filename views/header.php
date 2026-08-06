@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= APP_NAME ?> — <?= APP_TAGLINE ?></title>
 
-    <!-- Tailwind CSS v4 via CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
-    <!-- Google Fonts: DM Serif Display + Outfit + JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Local assets (no CDN):
+         tailwindcss.js = @tailwindcss/browser@4.3.3 (global build)
+         chart.umd.min.js = chart.js@4.5.1
+         fonts.css = DM Serif Display + Outfit (variable) + JetBrains Mono, vendored woff2 -->
+    <script src="assets/js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="assets/css/fonts.css">
+    <script src="assets/js/chart.umd.min.js"></script>
 
     <style type="text/tailwindcss">
         /* ═══════════════════════════════════════════
@@ -377,14 +374,21 @@
             <div class="flex items-center justify-between h-16">
 
                 <!-- Brand -->
+                <?php
+                $navLogoUrl = dbGetSetting('app_logo_url');
+                $navLogoText = dbGetSetting('app_logo_text', 'A');
+                ?>
                 <a href="?page=home" class="flex items-center gap-3 group">
+                    <?php if (!empty($navLogoUrl)): ?>
+                    <img src="<?= htmlspecialchars($navLogoUrl) ?>" alt="Logo" class="w-10 h-10 object-contain">
+                    <?php else: ?>
                     <div class="w-10 h-10 bg-ink flex items-center justify-center relative overflow-hidden">
-                        <span class="text-white font-display text-xl italic leading-none relative z-10">A</span>
-                        <!-- Decorative corner accent -->
+                        <span class="text-white font-display text-xl italic leading-none relative z-10"><?= htmlspecialchars($navLogoText) ?></span>
                         <div class="absolute bottom-0 right-0 w-3 h-3 bg-gold"></div>
                     </div>
+                    <?php endif; ?>
                     <div class="flex flex-col">
-                        <span class="text-sm font-semibold text-ink leading-tight tracking-tight">AHP Calculator</span>
+                        <span class="text-sm font-semibold text-ink leading-tight tracking-tight"><?= htmlspecialchars(dbGetSetting('app_name', APP_NAME)) ?></span>
                         <span class="text-[10px] text-ink-muted uppercase tracking-widest font-medium">Decision Support</span>
                     </div>
                 </a>
@@ -452,6 +456,13 @@
                                 <div class="px-3 py-2 text-xs text-ink-muted border-b border-border mb-1">
                                     <?= htmlspecialchars($currentUser['email'] ?? '') ?>
                                 </div>
+                                <a href="?page=profile"
+                                   class="flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-teal-xlight transition-colors rounded-sm">
+                                    <svg class="w-4 h-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    Profil Saya
+                                </a>
                                 <a href="?page=dashboard"
                                    class="flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-teal-xlight transition-colors rounded-sm">
                                     <svg class="w-4 h-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">

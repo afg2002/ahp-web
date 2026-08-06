@@ -109,6 +109,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Update Profile
+    if ($action === 'update_profile') {
+        requireLogin();
+        $username = trim($_POST['username'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        if (strlen($username) < 3) {
+            $_SESSION['flash_message'] = 'Username minimal 3 karakter.';
+            $_SESSION['flash_type'] = 'error';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['flash_message'] = 'Email tidak valid.';
+            $_SESSION['flash_type'] = 'error';
+        } elseif (!empty($newPassword) && strlen($newPassword) < 6) {
+            $_SESSION['flash_message'] = 'Password baru minimal 6 karakter.';
+            $_SESSION['flash_type'] = 'error';
+        } elseif (!empty($newPassword) && $newPassword !== $confirmPassword) {
+            $_SESSION['flash_message'] = 'Konfirmasi password baru tidak cocok.';
+            $_SESSION['flash_type'] = 'error';
+        } else {
+            $result = dbUpdateUserProfile($_SESSION['user_id'], $username, $email, $currentPassword, $newPassword);
+            if ($result['success']) {
+                $_SESSION['flash_message'] = 'Profil Anda berhasil diperbarui.';
+                $_SESSION['flash_type'] = 'success';
+            } else {
+                $_SESSION['flash_message'] = $result['error'];
+                $_SESSION['flash_type'] = 'error';
+            }
+        }
+        header('Location: ?page=profile');
+        exit;
+    }
+
+
     // ============================================================
     // ADMIN CRUD HANDLERS
     // ============================================================
@@ -241,6 +277,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ?page=admin-alternatives'); exit;
     }
 
+    // Admin: Save App & Report Settings
+    if ($action === 'admin_save_settings') {
+        requireAdmin();
+        if (isset($_POST['app_institution'])) dbSetSetting('app_institution', trim($_POST['app_institution']));
+        if (isset($_POST['app_logo_text'])) dbSetSetting('app_logo_text', strtoupper(trim($_POST['app_logo_text'])));
+        if (isset($_POST['app_logo_url'])) dbSetSetting('app_logo_url', trim($_POST['app_logo_url']));
+        if (isset($_POST['report_signer_title'])) dbSetSetting('report_signer_title', trim($_POST['report_signer_title']));
+        if (isset($_POST['report_signer_name'])) dbSetSetting('report_signer_name', trim($_POST['report_signer_name']));
+        if (isset($_POST['report_header_align'])) dbSetSetting('report_header_align', $_POST['report_header_align']);
+
+        $_SESSION['flash_message'] = 'Pengaturan aplikasi & laporan berhasil disimpan.';
+        $_SESSION['flash_type'] = 'success';
+        header('Location: ?page=admin-settings'); exit;
+    }
+
+
     // ============================================================
     // AHP STEP HANDLERS
     // ============================================================
@@ -341,6 +393,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['ahp']['alternative_labels'] = $labels;
         $_SESSION['ahp']['pairwise_alternatives'] = [];
         $_SESSION['ahp']['results'] = [];
+
+        // Sync the working alternatives to the global alternatives table
+        if ($dbReady) {
+            try {
+                dbReplaceAllGlobalAlternatives(array_values($newAlts));
+            } catch (Exception $e) {}
+        }
+
         header('Location: ?page=step4');
         exit;
     }
@@ -527,8 +587,8 @@ function calculateResults() {
 // ============================================================
 
 $publicPages = ['home', 'login', 'register', 'about'];
-$protectedPages = ['step1', 'step2', 'step3', 'step4', 'step5', 'results', 'dashboard', 'view'];
-$adminPages = ['admin-dashboard', 'admin-users', 'admin-criteria', 'admin-alternatives'];
+$protectedPages = ['profile', 'step1', 'step2', 'step3', 'step4', 'step5', 'results', 'dashboard', 'view'];
+$adminPages = ['admin-dashboard', 'admin-users', 'admin-criteria', 'admin-alternatives', 'admin-settings'];
 
 if (in_array($step, $protectedPages) && !isLoggedIn()) {
     $_SESSION['flash_message'] = 'Silakan masuk untuk melanjutkan.';
@@ -561,6 +621,7 @@ $viewMap = [
     'home' => 'home.php',
     'login' => 'auth-login.php',
     'register' => 'auth-register.php',
+    'profile' => 'profile.php',
     'step1' => 'step1.php',
     'step2' => 'step2.php',
     'step3' => 'step3.php',
@@ -574,6 +635,7 @@ $viewMap = [
     'admin-users' => 'admin-users.php',
     'admin-criteria' => 'admin-criteria.php',
     'admin-alternatives' => 'admin-alternatives.php',
+    'admin-settings' => 'admin-settings.php',
 ];
 
 $viewFile = $viewMap[$step] ?? 'home.php';

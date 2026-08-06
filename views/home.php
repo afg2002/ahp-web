@@ -35,6 +35,19 @@
                 Pelajari AHP
             </a>
         </div>
+
+        <?php if (!empty($_SESSION['ahp']['goal']) || !empty($_SESSION['ahp']['criteria'])): ?>
+        <div class="mt-8 p-4 bg-teal-lighter border border-teal-light max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+            <div>
+                <div class="text-xs uppercase tracking-wider text-teal font-bold mb-0.5">Sesi Aktif Ditemukan</div>
+                <div class="text-sm font-semibold text-ink"><?= htmlspecialchars($_SESSION['ahp']['goal'] ?: 'Analisis Tanpa Judul') ?></div>
+                <div class="text-xs text-ink-muted"><?= count($_SESSION['ahp']['criteria'] ?? []) ?> kriteria, <?= count($_SESSION['ahp']['alternatives'] ?? []) ?> alternatif</div>
+            </div>
+            <a href="?page=step1" class="btn-primary text-xs py-2 px-4 whitespace-nowrap">
+                Lanjutkan Analisis →
+            </a>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- ═══ HOW IT WORKS ═══ -->

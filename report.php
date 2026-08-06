@@ -17,8 +17,13 @@ if (!isLoggedIn()) {
 
 $type = $_GET['type'] ?? '';
 $today = date('d F Y');
-$institution = APP_INSTITUTION;
-$appName = APP_NAME;
+$institution = dbGetSetting('app_institution', APP_INSTITUTION);
+$appName = dbGetSetting('app_name', APP_NAME);
+$logoText = dbGetSetting('app_logo_text', 'A');
+$logoUrl = dbGetSetting('app_logo_url', '');
+$signerTitle = dbGetSetting('report_signer_title', 'Hormat Kami,');
+$signerName = dbGetSetting('report_signer_name', 'Widya Corietania Basri, S.H., M.Kn.');
+$headerAlign = dbGetSetting('report_header_align', 'center');
 
 // Collect data
 $data = [];
@@ -109,11 +114,11 @@ switch ($type) {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title><?= $title ?> — <?= $appName ?></title>
+    <title><?= htmlspecialchars($title) ?> — <?= htmlspecialchars($appName) ?></title>
     <style>
         /* ── Page setup — suppress browser URL/page numbers ── */
         @page {
-            margin: 2cm 2.5cm;
+            margin: 1.2cm 1.5cm;
             size: auto;
         }
 
@@ -121,39 +126,56 @@ switch ($type) {
 
         body {
             font-family: 'Georgia', 'Times New Roman', Times, serif;
-            font-size: 12pt;
+            font-size: 11pt;
             line-height: 1.5;
             color: #1a1a1a;
             width: 100%;
         }
 
-        /* ── Kop Surat: Logo kiri + Teks kanan ── */
+        /* ── Kop Surat ── */
         .letterhead {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 3px double #1a5c5a;
+        }
+        .letterhead.header-center {
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .letterhead.header-left {
+            display: flex;
+            flex-direction: row;
             align-items: center;
             gap: 20px;
-            margin-bottom: 28px;
-            padding-bottom: 18px;
-            border-bottom: 3px double #1a5c5a;
+            text-align: left;
         }
         .letterhead .logo-area {
             flex-shrink: 0;
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border: 2px solid #1a5c5a;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 6px;
+        }
+        .letterhead.header-left .logo-area {
+            margin-bottom: 0;
+        }
+        .letterhead .logo-area img {
+            max-width: 60px;
+            max-height: 60px;
+            object-fit: contain;
         }
         .letterhead .logo-area span {
             font-family: Georgia, serif;
-            font-size: 28pt;
+            font-size: 26pt;
             font-weight: bold;
             font-style: italic;
             color: #1a5c5a;
-        }
-        .letterhead .text-area {
-            flex: 1;
         }
         .letterhead .text-area h1 {
             font-size: 15pt;
@@ -165,12 +187,12 @@ switch ($type) {
         }
         .letterhead .text-area .sub {
             font-size: 10pt;
-            color: #555;
+            color: #444;
             margin: 0 0 2px 0;
         }
         .letterhead .text-area .address {
             font-size: 9pt;
-            color: #888;
+            color: #777;
         }
 
         /* ── Title ── */
@@ -198,9 +220,8 @@ switch ($type) {
             margin: 8px 0 14px 0;
             padding: 6px 10px;
             background: #f5f5f5;
-        }
-        .info-bar span {
-            margin-right: 24px;
+            display: flex;
+            justify-content: space-between;
         }
 
         /* ── Table ── */
@@ -215,12 +236,12 @@ switch ($type) {
             color: white;
             font-weight: bold;
             text-align: center;
-            padding: 6px 8px;
+            padding: 7px 8px;
             border: 1px solid #134e4a;
             font-size: 10pt;
         }
         table tbody td {
-            padding: 5px 8px;
+            padding: 6px 8px;
             border: 1px solid #ccc;
             text-align: center;
             vertical-align: middle;
@@ -230,43 +251,42 @@ switch ($type) {
 
         /* ── Signature ── */
         .signature-wrapper {
-            margin-top: 50px;
+            margin-top: 48px;
             width: 100%;
             display: flex;
             justify-content: flex-end;
+            page-break-inside: avoid;
         }
         .signature-box {
             text-align: center;
-            min-width: 220px;
+            width: 280px;
         }
         .signature-box .city-date {
             font-size: 11pt;
-            margin-bottom: 16px;
+            margin-bottom: 4px;
             white-space: nowrap;
         }
         .signature-box .title-label {
             font-size: 10pt;
             color: #555;
-            margin-bottom: 70px;
+            margin-bottom: 75px;
         }
-        .signature-box .sign-line {
-            display: block;
-            width: 200px;
-            border-top: 1.5px solid #1a1a1a;
-            padding-top: 6px;
+        .signature-box .name-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 11pt;
             font-weight: bold;
-            margin: 0 auto;
+            color: #1a1a1a;
+            white-space: nowrap;
         }
-
-        /* ── Footer ── */
-        .report-footer {
-            margin-top: 30px;
-            padding-top: 8px;
-            border-top: 1px solid #ddd;
-            font-size: 8.5pt;
-            color: #aaa;
+        .signature-box .name-line {
+            display: inline-block;
+            min-width: 210px;
+            border-bottom: 1.5px dotted #1a1a1a;
             text-align: center;
+            padding-bottom: 2px;
+            margin: 0 4px;
         }
 
         /* ── Print button (screen only) ── */
@@ -282,6 +302,7 @@ switch ($type) {
             font-size: 14px;
             cursor: pointer;
             font-family: Georgia, serif;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .no-print button:hover { background: #134e4a; }
         .no-print .print-note {
@@ -309,7 +330,6 @@ switch ($type) {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            /* Force header bg color in print */
             thead { display: table-header-group; }
         }
     </style>
@@ -317,16 +337,20 @@ switch ($type) {
 <body>
 
     <!-- ═══════════════════════════════════════════
-         KOP SURAT — LOGO KIRI + TEKS KANAN
+         KOP SURAT — CENTER / LEFT ALIGNED (CUSTOM)
          ═══════════════════════════════════════════ -->
-    <div class="letterhead">
+    <div class="letterhead <?= $headerAlign === 'center' ? 'header-center' : 'header-left' ?>">
         <div class="logo-area">
-            <span>A</span>
+            <?php if (!empty($logoUrl)): ?>
+            <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo">
+            <?php else: ?>
+            <span><?= htmlspecialchars($logoText) ?></span>
+            <?php endif; ?>
         </div>
         <div class="text-area">
             <h1><?= htmlspecialchars($institution) ?></h1>
             <p class="sub">Sistem Pendukung Keputusan — Metode Analytical Hierarchy Process (AHP)</p>
-            <p class="address">AHP Calculator v1.0 — Prioritas Pengurusan Akta</p>
+            <p class="address"><?= htmlspecialchars($appName) ?> — Prioritas Pengurusan Akta</p>
         </div>
     </div>
 
@@ -389,16 +413,13 @@ switch ($type) {
     <div class="signature-wrapper">
         <div class="signature-box">
             <p class="city-date"><?= htmlspecialchars($institution) ?>, <?= $today ?></p>
-            <p class="title-label">Hormat Kami,</p>
-            <span class="sign-line">( _______________________ )</span>
+            <p class="title-label"><?= htmlspecialchars($signerTitle) ?></p>
+            <div class="name-container">
+                <span>(</span>
+                <span class="name-line"><?= htmlspecialchars($signerName) ?></span>
+                <span>)</span>
+            </div>
         </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════
-         FOOTER
-         ═══════════════════════════════════════════ -->
-    <div class="report-footer">
-        <?= htmlspecialchars($appName) ?> — Laporan digenerate otomatis — <?= $today ?>
     </div>
 
     <!-- ═══════════════════════════════════════════
@@ -408,8 +429,8 @@ switch ($type) {
         <button onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
         <p class="print-note">
             ✓ Unceklis <strong>"Header dan Footer"</strong> (atau "Headers and footers") di dialog cetak browser<br>
-            agar URL dan nomor halaman tidak muncul.<br>
-            Pilih <strong>"Save as PDF"</strong> sebagai tujuan.
+            agar URL dan nomor halaman di tepi kertas tidak muncul.<br>
+            Pilih <strong>"Save as PDF"</strong> sebagai tujuan cetak.
         </p>
     </div>
 

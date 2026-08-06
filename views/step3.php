@@ -1,5 +1,20 @@
 <?php
+// Load alternatives from session; if empty, seed from global alternatives table
 $alternatives = $_SESSION['ahp']['alternatives'] ?? [];
+if (empty($alternatives) && $dbReady) {
+    try {
+        $globalAlts = dbGetActiveGlobalAlternatives();
+        $alternatives = [];
+        $labels = [];
+        foreach ($globalAlts as $i => $ga) {
+            $id = 'a' . ($i + 1);
+            $alternatives[$id] = $ga['name'];
+            $labels[$id] = $ga['name'];
+        }
+        $_SESSION['ahp']['alternatives'] = $alternatives;
+        $_SESSION['ahp']['alternative_labels'] = $labels;
+    } catch (Exception $e) {}
+}
 ?>
 <!-- Step 3: Alternatives -->
 <div class="fade-in max-w-2xl mx-auto">

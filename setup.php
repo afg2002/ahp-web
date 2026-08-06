@@ -156,22 +156,22 @@ try {
     $stmt->close();
     echo "<div class='success'>✅ 6 Kriteria seeded.</div>";
 
-    // 4. Seed global alternatives
+    // 4. Seed global alternatives (data customer/alternatif pengurusan akta)
     echo "<div class='info'>⚡ Seeding global alternatives...</div>";
 
     $altData = [
-        'Pengurusan Akta Kelahiran',
-        'Pengurusan Akta Kematian',
-        'Pengurusan Akta Perkawinan',
-        'Pengurusan Akta Perceraian',
-        'Pengurusan Akta Tanah',
-        'Pengurusan Akta Pendirian Perusahaan',
-        'Pengurusan Akta Warisan',
-        'Legaliasir Dokumen',
+        'PT Jaya Abadi',
+        'PT Pelindung Citra',
+        'PT Sumber Waras',
+        'PT Global Sistema',
+        'PT Agung Properti',
+        'Putri Sinaga',
+        'Dito Pramono',
+        'Venny Pangestu',
     ];
 
     $stmt = $conn->prepare("INSERT IGNORE INTO `global_alternatives` (`name`, `description`) VALUES (?, ?)");
-    $desc = 'Alternatif prioritas pengurusan akta';
+    $desc = 'Customer/alternatif prioritas pengurusan akta';
     foreach ($altData as $name) {
         $stmt->bind_param("ss", $name, $desc);
         $stmt->execute();

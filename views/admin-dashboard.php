@@ -43,6 +43,7 @@ $recentAnalyses = $analysisStats['recent'] ?? [];
         <a href="?page=admin-users" class="btn-secondary text-sm">👥 Kelola Users</a>
         <a href="?page=admin-criteria" class="btn-secondary text-sm">📋 Kelola Kriteria</a>
         <a href="?page=admin-alternatives" class="btn-secondary text-sm">📌 Kelola Alternatif</a>
+        <a href="?page=admin-settings" class="btn-primary text-sm">⚙️ Pengaturan System</a>
         <a href="?page=dashboard" class="btn-secondary text-sm">📊 Lihat Semua Analisis</a>
     </div>
 
