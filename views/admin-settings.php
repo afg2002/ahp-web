@@ -26,7 +26,7 @@ $settings = dbGetAllSettings();
     </div>
     <?php endif; ?>
 
-    <form method="POST" action="?page=admin-settings">
+    <form method="POST" action="?page=admin-settings" enctype="multipart/form-data">
         <input type="hidden" name="action" value="admin_save_settings">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -69,9 +69,15 @@ $settings = dbGetAllSettings();
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">URL Logo Gambar (Opsional)</label>
-                    <input type="url" name="app_logo_url" value="<?= htmlspecialchars($settings['app_logo_url']) ?>" placeholder="https://example.com/logo.png" class="input-field text-sm">
-                    <p class="text-[11px] text-ink-muted mt-1">Jika diisi, gambar ini akan menggantikan inisial huruf di laporan.</p>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">Upload Logo Gambar (Opsional)</label>
+                    <?php if (!empty($settings['app_logo_url'])): ?>
+                    <div class="flex items-center gap-2 mb-2">
+                        <img src="<?= htmlspecialchars($settings['app_logo_url']) ?>" alt="Logo saat ini" class="w-10 h-10 object-contain border border-border">
+                        <span class="text-[11px] text-ink-muted">Logo saat ini</span>
+                    </div>
+                    <?php endif; ?>
+                    <input type="file" name="app_logo_file" accept=".jpg,.jpeg,.png,.webp,.svg" class="input-field text-sm">
+                    <p class="text-[11px] text-ink-muted mt-1">JPG/PNG/WEBP/SVG, maks 2MB. Jika diunggah, gambar ini akan menggantikan inisial huruf di navbar & laporan.</p>
                 </div>
             </div>
 

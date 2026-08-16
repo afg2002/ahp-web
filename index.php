@@ -283,7 +283,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['app_name'])) dbSetSetting('app_name', trim($_POST['app_name']));
         if (isset($_POST['app_institution'])) dbSetSetting('app_institution', trim($_POST['app_institution']));
         if (isset($_POST['app_logo_text'])) dbSetSetting('app_logo_text', strtoupper(trim($_POST['app_logo_text'])));
-        if (isset($_POST['app_logo_url'])) dbSetSetting('app_logo_url', trim($_POST['app_logo_url']));
+
+        // Upload logo dari komputer lokal (opsional, gantikan URL manual)
+        if (!empty($_FILES['app_logo_file']['name']) && $_FILES['app_logo_file']['error'] === UPLOAD_ERR_OK) {
+            $allowed = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'svg' => 'image/svg+xml'];
+            $ext = strtolower(pathinfo($_FILES['app_logo_file']['name'], PATHINFO_EXTENSION));
+            if (!isset($allowed[$ext])) {
+                $_SESSION['flash_message'] = 'Format logo tidak didukung. Gunakan JPG, PNG, WEBP, atau SVG.';
+                $_SESSION['flash_type'] = 'error';
+                header('Location: ?page=admin-settings'); exit;
+            } elseif ($_FILES['app_logo_file']['size'] > 2 * 1024 * 1024) {
+                $_SESSION['flash_message'] = 'Ukuran logo maksimal 2MB.';
+                $_SESSION['flash_type'] = 'error';
+                header('Location: ?page=admin-settings'); exit;
+            } else {
+                $uploadDir = __DIR__ . '/assets/uploads/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                $filename = 'logo_' . bin2hex(random_bytes(8)) . '.' . $ext;
+                if (move_uploaded_file($_FILES['app_logo_file']['tmp_name'], $uploadDir . $filename)) {
+                    dbSetSetting('app_logo_url', 'assets/uploads/' . $filename);
+                }
+            }
+        }
+
         if (isset($_POST['report_signer_title'])) dbSetSetting('report_signer_title', trim($_POST['report_signer_title']));
         if (isset($_POST['report_signer_name'])) dbSetSetting('report_signer_name', trim($_POST['report_signer_name']));
         if (isset($_POST['report_header_align'])) dbSetSetting('report_header_align', $_POST['report_header_align']);
