@@ -41,6 +41,12 @@ $settings = dbGetAllSettings();
                 </h2>
 
                 <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">Nama Aplikasi</label>
+                    <input type="text" name="app_name" value="<?= htmlspecialchars($settings['app_name']) ?>" required class="input-field text-sm">
+                    <p class="text-[11px] text-ink-muted mt-1">Ditampilkan di navbar dan judul tab browser.</p>
+                </div>
+
+                <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">Nama Instansi / Perusahaan</label>
                     <input type="text" name="app_institution" value="<?= htmlspecialchars($settings['app_institution']) ?>" required class="input-field text-sm">
                     <p class="text-[11px] text-ink-muted mt-1">Ditampilkan pada header Kop Surat laporan cetak.</p>

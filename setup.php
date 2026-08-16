@@ -9,6 +9,14 @@
 
 require_once 'config.php';
 require_once 'database.php';
+require_once 'db_helpers.php';
+
+// ponytail: setup already ran once (criteria seeded) -> lock this page so it can't be
+// re-triggered/publicly browsed on a live client site. Delete setup.php once done, or
+// pass ?force=1 (dev only) if you really need to re-run it.
+if (dbIsSetupComplete() && !isset($_GET['force'])) {
+    die('Setup sudah selesai dijalankan sebelumnya. Hapus file setup.php ini dari server, atau tambahkan ?force=1 di URL bila memang perlu menjalankan ulang.');
+}
 
 echo "<!DOCTYPE html><html><head><title>AHP Setup</title>";
 echo "<style>

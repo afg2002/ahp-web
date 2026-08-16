@@ -72,7 +72,8 @@ Semua tangkapan layar tersimpan dalam folder [`screenshots/`](screenshots).
 ## 🚀 Instalasi & Menjalankan
 
 ### 1. Persiapkan database
-- Buat database MySQL, mis. `ahp_calculator` (server default: `localhost`, user `root`, tanpa password — lihat `config.php`).
+- Buat database MySQL, mis. `ahp_calculator`.
+- Buka `config.php`, sesuaikan `DB_HOST` / `DB_USER` / `DB_PASS` / `DB_NAME` dengan kredensial hosting/server yang dipakai (default: `localhost`, user `root`, tanpa password — cocok untuk lokal/Laragon/XAMPP, biasanya beda di hosting client).
 
 ### 2. Clone/downoload project
 ```bash
@@ -88,6 +89,8 @@ http://localhost:8000/setup.php
 ```
 
 > **Akun super admin default:** username `admin` / password `admin123` — **ganti di produksi!**
+
+> ⚠️ Setelah setup selesai, **hapus `setup.php` dari server** (atau minimal jangan biarkan publik). Script ini terkunci otomatis begitu data kriteria sudah ter-seed, tapi tetap sebaiknya dihapus agar tidak bisa diakses/dijalankan ulang oleh orang lain. Nama aplikasi & identitas instansi bisa diatur belakangan lewat menu **Admin → Pengaturan**, tidak perlu edit kode.
 
 ### 4. Jalankan server
 Dengan PHP built-in server:

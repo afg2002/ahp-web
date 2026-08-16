@@ -280,6 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Admin: Save App & Report Settings
     if ($action === 'admin_save_settings') {
         requireAdmin();
+        if (isset($_POST['app_name'])) dbSetSetting('app_name', trim($_POST['app_name']));
         if (isset($_POST['app_institution'])) dbSetSetting('app_institution', trim($_POST['app_institution']));
         if (isset($_POST['app_logo_text'])) dbSetSetting('app_logo_text', strtoupper(trim($_POST['app_logo_text'])));
         if (isset($_POST['app_logo_url'])) dbSetSetting('app_logo_url', trim($_POST['app_logo_url']));

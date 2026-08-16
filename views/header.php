@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= APP_NAME ?> — <?= APP_TAGLINE ?></title>
+    <title><?= htmlspecialchars($dbReady ? dbGetSetting('app_name', APP_NAME) : APP_NAME) ?> — <?= APP_TAGLINE ?></title>
 
     <!-- Local assets (no CDN):
          tailwindcss.js = @tailwindcss/browser@4.3.3 (global build)

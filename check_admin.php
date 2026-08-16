@@ -5,6 +5,7 @@ require_once 'functions.php';
 require_once 'db_helpers.php';
 
 initSession();
+requireAdmin(); // ponytail: debug/diagnostic page, restrict to super_admin only
 
 echo "<!DOCTYPE html><html><head><title>Admin Check</title>";
 echo "<style>body{font-family:system-ui,sans-serif;max-width:700px;margin:40px auto;padding:20px;}
